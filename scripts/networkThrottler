@@ -1,0 +1,32 @@
+### BEGIN INIT INFO
+# Provides:             twilio
+# Required-Start:
+# Required-Stop:
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    Network Throttler Node App
+### END INIT INFO
+
+export PATH=$PATH:/usr/local/bin
+export NODE_PATH=$NODE_PATH:/home/pi/projects/networkThrottler/node_modules:/home/pi/projects/networkThrottler
+export HOME=/root
+
+case "$1" in
+  start)
+    echo "Starting Network Throttler"
+    cd /home/pi/projects/networkThrottler
+    su pi -c "mkdir -p /home/pi/projects/networkThrottler/logs"
+    su pi -c "forever -e /home/pi/projects/networkThrottler/logs/error.log -c nodemon --exitcrash --delay 5 app.js >> /home/pi/projects/networkThrottler/logs/node.log 2>&1 &"
+    ;;
+  stop)
+    echo "Stopping Network Throttler"
+    exec killall -9 node
+    exec forever stopall
+    ;;
+  *)
+
+  echo "Usage: /etc/init.d/networkThrottler {start|stop}"
+  exit 1
+  ;;
+esac
+exit 0

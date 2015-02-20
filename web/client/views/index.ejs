@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  	<meta charset="utf-8">
+  	<title>Traffic Throttler</title>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  	<meta name="description" content="">
+  	<meta name="author" content="">
+
+	<!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
+	<!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
+	<!--script src="js/less-1.3.3.min.js"></script-->
+	<!--append ‘#!watch’ to the browser URL, then refresh the page. -->
+	
+	<link href="../css/bootstrap.min.css" rel="stylesheet">
+	<link href="../css/style.css" rel="stylesheet">
+
+  <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+  <!--[if lt IE 9]>
+    <script src="js/html5shiv.js"></script>
+  <![endif]-->
+
+  	<!-- Fav and touch icons -->
+  	<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../img/apple-touch-icon-144-precomposed.png">
+  	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../img/apple-touch-icon-114-precomposed.png">
+  	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../img/apple-touch-icon-72-precomposed.png">
+  	<link rel="apple-touch-icon-precomposed" href="../img/apple-touch-icon-57-precomposed.png">
+  	<link rel="shortcut icon" href="../img/favicon.png">
+  
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
+	<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../js/scripts.js"></script>
+	<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+
+	<script type='text/javascript'>
+
+		var sio = io.connect(window.location.origin);
+		var profiles = <%- profiles %>;
+		var currentStatus = <%- status %>;
+
+		function initView() {
+
+			var dropdown = $("#dropdownProfiles");
+			for (var i = 0; i < profiles.length; i++) {
+				var profile = profiles[i];
+				var li = document.createElement("li");
+	            var link = document.createElement("a");             
+	            var text = document.createTextNode(profile.name);
+	            link.appendChild(text);
+	            link.href = "#";
+	            li.appendChild(link);
+	            dropdown.append(li);
+			}
+
+			$(document.body).on('click','.dropdown-menu li', function(event) {
+
+				var $target = $(event.currentTarget);
+				$target.closest('.btn-group').find('[data-bind="label"]').text($target.text()).end().children('.dropdown-toggle').dropdown('toggle');
+				for (var i = 0; i < profiles.length; i++) {
+					if ($target.text() == profiles[i].name) {
+						$('#textLatency').val(profiles[i].latency);
+						$('#textBandwidth').val(profiles[i].bandwidth);
+						$('#textPacketLoss').val(profiles[i].packetLoss);
+					}
+				}
+				return false;
+			});
+
+			updateCurrentStatusView(currentStatus);
+		};
+
+		function startThrottler() {
+			var conf = {
+				latency: $('#textLatency').val(),
+				jitter: $('#textJitter').val(),
+				bandwidth: $('#textBandwidth').val(),
+				packetLoss: $('#textPacketLoss').val(),
+				packetDuplication: $('#textPacketDuplication').val(),
+				packetCorruption: $('#textPacketCorruption').val(),
+				netInterface: $('#textNetInterface').val()
+			};
+			// showResultMessage("test","test");
+			sio.emit('startThrottler', conf, function(result) {
+				showResultMessage(result.status, result.message);
+				updateCurrentStatusView(result.throttlerStatus);
+			});
+		}
+
+		function stopThrottler() {
+			// showResultMessage("test","test");
+			sio.emit('stopThrottler', function(result) {
+				showResultMessage(result.status, result.message);
+				updateCurrentStatusView(result.throttlerStatus);
+			});
+		}
+
+		function getStatus() {
+			sio.emit('getStatus', function(result) {
+				updateCurrentStatusView(result);
+			});
+		}
+
+		function checkForUpdates() {
+			sio.emit('checkForUpdates', function(result) {
+				showResultMessage(result.status, result.message);
+			});
+		}
+
+		function updateCurrentStatusView(statusData) {
+			if (statusData) {
+				if (statusData.status) {
+					$('#currentStatus').val(statusData.status);
+				}
+				if (statusData.config) {
+					$('#currentLatency').val(statusData.config.latency);
+					$('#currentJitter').val(statusData.config.jitter);
+					$('#currentBandwidth').val(statusData.config.bandwidth);
+					$('#currentPacketLoss').val(statusData.config.packetLoss);
+					$('#currentPacketDuplication').val(statusData.config.packetDuplication);
+					$('#currentPacketCorruption').val(statusData.config.packetCorruption);
+					$('#currentNetInterface').val(statusData.config.netInterface);
+				}
+				else {
+					$('#currentLatency').val("");
+					$('#currentJitter').val("");
+					$('#currentBandwidth').val("");
+					$('#currentPacketLoss').val("");
+					$('#currentPacketDuplication').val("");
+					$('#currentPacketCorruption').val("");
+					$('#currentNetInterface').val("");
+				}
+				if (statusData.shellOutput) {
+					$('#shellOutput').val(statusData.shellOutput);
+				}
+				else {
+					$('#shellOutput').val();
+				}
+			}
+		}
+
+		function showResultMessage(status, text) {
+
+			if (status == "Success") {
+				$("#modalText").removeClass('text-danger');
+				$("#modalHeader").removeClass('text-danger');
+				$("#modalText").addClass('text-success');
+				$("#modalHeader").addClass('text-success');
+			}
+			else {
+				$("#modalText").removeClass('text-success');
+				$("#modalHeader").removeClass('text-success');
+				$("#modalText").addClass('text-danger');
+				$("#modalHeader").addClass('text-danger');
+			}
+
+			$("#modalHeader").text(status);
+			$("#modalText").text(typeof text === 'object' ? JSON.stringify(text) : text);
+
+			$("#messageModal").modal('show');
+	    }
+
+	</script>
+
+</head>
+
+<body onload='initView();'>
+<div id="messageModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3 class="modal-title" id="modalHeader">Confirmation</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modalText" class="" style="font-size:large"></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<nav class="navbar navbar-default" role="navigation">
+				<div class="navbar-header">
+					 <a class="navbar-brand" href="#">Traffic Throttler</a>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-right">
+						<button class="btn btn-default" style="margin: 7px" type="submit" onclick="checkForUpdates();">Check For Updates</button>
+					</ul>
+				</div>
+			</nav>
+			<div class="tabbable" id="tabsThrotler">
+				<ul class="nav nav-tabs">
+					<li class="active">
+						<a href="#panelSettings" data-toggle="tab">Throttler Settings</a>
+					</li>
+					<li>
+						<a href="#panelStatus" data-toggle="tab">Throttler Status</a>
+					</li>
+					<!-- <li>
+						<a href="#panelCmd" data-toggle="tab">Execute Shell CMD</a>
+					</li> -->
+				</ul>
+				<div class="tab-content">
+
+					<div class="tab-pane active well" id="panelSettings">
+						<div class="row clearfix form-horizontal">
+							<div class="col-md-offset-2 col-md-6 column">
+								<div class="form-group clearfix">
+							    	<label for="selectProfiles" class="col-sm-5 control-label" title="Throttler Profiles" >Profiles</label>
+								    <div class="col-sm-7">
+							      		<div class="btn-group btn-input clearfix" id="selectProfiles">
+											<label class="btn btn-default" data-bind="label">Select Profile</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<ul class="dropdown-menu" id="dropdownProfiles">
+											</ul>
+										</div>
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textNetInterface" class="col-sm-5 control-label">Net Interface</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textNetInterface" placeholder="Network Interface Name (default: wlan0)">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textLatency" class="col-sm-5 control-label">Latency</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textLatency" placeholder="Latency to add in ms">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textJitter" class="col-sm-5 control-label">Jitter</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textJitter" placeholder="Jitter to apply in ms">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textBandwidth" class="col-sm-5 control-label">Bandwidth</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textBandwidth" placeholder="Target bandwidth limit in kbit/s">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textPacketLoss" class="col-sm-5 control-label">Packets Loss</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textPacketLoss" placeholder="Packets loss percentage">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textPacketDuplication" class="col-sm-5 control-label">Packets Duplication</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textPacketDuplication" placeholder="Packets dupplication percentage">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textPacketCorruption" class="col-sm-5 control-label">Packets Corruption</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textPacketCorruption" placeholder="Packets corruption percentage">
+								    </div>
+							  	</div>
+							  	<div class="row clearfix" style="text-align: center">
+							  		<button class="btn btn-default" type="submit" onclick="startThrottler();">Start</button>
+									<button class="btn btn-default" type="button" onclick="stopThrottler();">Stop</button>
+						  		</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="tab-pane well" id="panelStatus">
+						<div class="row clearfix form-horizontal">
+							<div class="col-md-offset-2 col-md-6 column">
+								<div class="form-group">
+							    	<label for="currentStatus" class="col-sm-5 control-label">Current Status</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentStatus" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentNetInterface" class="col-sm-5 control-label">Net Interface</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentNetInterface" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentLatency" class="col-sm-5 control-label">Latency</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentLatency" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentJitter" class="col-sm-5 control-label">Jitter</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentJitter" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentBandwidth" class="col-sm-5 control-label">Bandwidth</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentBandwidth" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentPacketLoss" class="col-sm-5 control-label">Packets Loss</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentPacketLoss" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentPacketDuplication" class="col-sm-5 control-label">Packets Duplication</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentPacketDuplication" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentPacketCorruption" class="col-sm-5 control-label">Packets Corruption</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentPacketCorruption" placeholder="None">
+								    </div>
+							  	</div>
+							  	
+							</div>
+
+						</div>
+
+						<div class="form-group" style="margin-top: 10px" >
+					    	<label for="shellOutput" class="col-sm-2 control-label">Shell output</label>
+						    <div class="col-sm-10">
+					      		<textarea disabled="true" style="resize: none" class="form-control" id="shellOutput" rows="5"></textarea>
+						    </div>
+					  	</div>
+
+					  	<div class="row clearfix" style="text-align: center">
+					  		<button class="btn btn-default" type="submit" style="margin-top: 20px" onclick="getStatus();">Get Status</button>
+				  		</div>
+					</div>
+
+					<div disabled="true" class="tab-pane well" id="panelCmd">
+						<div class="row clearfix form-horizontal">
+							<div class="col-md-offset-1 col-md-10 column">
+								<div class="form-group">
+							    	<label for="textCommand" class="col-sm-3 control-label">Shell Command</label>
+								    <div class="col-sm-9">
+							      		<input class="form-control" id="textCommand" placeholder="Enter Shell Command">
+								    </div>
+							  	</div>
+							</div>
+						</div>
+						<div class="row clearfix" style="text-align: center">
+					  		<button class="btn btn-default" type="button">Execute</button>
+				  		</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

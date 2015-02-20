@@ -1,0 +1,62 @@
+{
+	"http": {
+    	"port": 5000
+  	},
+  	"throttlerInterface": "wlan0",
+  	"throttlerProfiles": [
+  		{
+			"name":"GPRS (good)",
+			"latency": 500,
+			"bandwidth": 50,
+			"packetLoss": 1.5
+		},
+		{
+			"name":"EDGE (good)",
+			"latency": 300,
+			"bandwidth": 250,
+			"packetLoss": 1.5
+		},
+		{
+			"name":"3G/HSDPA (good)",
+			"latency": 250,
+			"bandwidth": 750,
+			"packetLoss": 1.5
+		},
+		{
+			"name":"DIAL-UP (good)",
+			"latency": 185,
+			"bandwidth": 40,
+			"packetLoss": 2
+		},
+		{
+			"name":"DSL (poor)",
+			"latency": 70,
+			"bandwidth": 2000,
+			"packetLoss": 2
+		},
+		{
+			"name":"DSL (good)",
+			"latency": 40,
+			"bandwidth": 8000,
+			"packetLoss": 0.5
+		},
+		{
+			"name":"WIFI (good)",
+			"latency": 40,
+			"bandwidth": 30000,
+			"packetLoss": 0.2
+		},
+		{
+			"name":"Satellite",
+			"latency": 1500,
+			"bandwidth": 100000,
+			"packetLoss": 2
+		},
+		{
+                        "name":"No Internet Connection",
+                        "latency": 500,
+                        "bandwidth": 5,
+                        "packetLoss": 100
+                }
+	]
+}

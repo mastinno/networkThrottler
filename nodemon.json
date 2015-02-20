@@ -1,0 +1,6 @@
+{
+      "ext": "js ejs json",
+      "exitcrash": true,
+      "ignore": [".git", "node_modules", "logs"],
+      "verbose": true
+}
