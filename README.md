@@ -5,7 +5,7 @@ NetworkThrottler NodeJS application implements network traffic shaper/throttler 
 
 NetworkThrottler provides web UI foronted to manage netowrk conditions (also contains list of pre-configured network conditions profiles).
 
-NetworkThrottler uses [tc](http://www.lartc.org/manpages/tc.txt)/[netem](http://www.linuxfoundation.org/collaborate/workgroups/networking/netem)on Linux and [ipfw](http://www.manpages.info/macosx/ipfw.8.html) on MacOS
+NetworkThrottler uses [tc](http://www.lartc.org/manpages/tc.txt)/[netem](http://www.linuxfoundation.org/collaborate/workgroups/networking/netem) on Linux and [ipfw](http://www.manpages.info/macosx/ipfw.8.html) on MacOS
 
 ##Contents
 Sources contents:
@@ -29,19 +29,26 @@ To run throttler on Raspberry PI you need to have following:
 
 * The latest stable version of NodeJS. Follow guide [here](http://weworkweplay.com/play/raspberry-pi-nodejs/) or [here](https://blog.adafruit.com/2015/02/13/download-compiled-version-of-node-js-0-12-0-stable-for-raspberry-pi-here-piday-raspberrypi-raspberry_pi/)
 * Installed NodeJs [forever](https://www.npmjs.com/package/forever) and [nodemon](https://www.npmjs.com/package/nodemon) modules in case you want to have auto-update and running application continuously.
+	
 	`$ [sudo] npm install forever -g`
 	`$ [sudo] npm install nodemon -g`
 
 ##Running
 
 To start Network Throtler just go inside the sources root directory and run:
+	
 	$ node app.js
 
 To configure Network Throttler as service/daemon use `./scripts/networkThrottler` example script. For Debian (or Linux that supports init.d ) put it inside init.d directory and run there
- `$ sudo update-rc.d networkThrottler defaults`). 
+
+	`$ sudo update-rc.d networkThrottler defaults`. 
+
 To start throttler service application run:
+	
 	`$ /etc/init.d/networkThrottler start`
+
 To stop throttler service application run:
+	
 	`$ /etc/init.d/networkThrottler stop`
 
 ##Logging
