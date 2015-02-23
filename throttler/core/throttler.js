@@ -78,7 +78,8 @@ define([
 			errorMsg += ", packets corruption (only number)";
 			error = true;
 		}
-		if (conf.netInterface.indexOf('wlan') == -1) {
+		if (conf.netInterface.indexOf('wlan') == -1
+			&& conf.netInterface.indexOf('bridge') == -1) {
 			errorMsg += ", network interface (e.g. wlan..)";
 			error = true;
 		}

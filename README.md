@@ -23,15 +23,15 @@ To run throttler on Raspberry PI you need to have following:
 * Connect to Raspberry Pi: 
     - via ssh (if you know its IP).
     - via [serial cable](http://workshop.raspberrypiaustralia.com/usb/ttl/connecting/2014/08/31/01-connecting-to-raspberry-pi-via-usb/). You may need to check [this](http://www.adafruit.com/products/954?&main_page=product_info&products_id=954) to find out correct wire colors in serial cable. Its possible that you need to use this command: screen /dev/cu.usbserial 115200)  
-* Configured WiFi access point. Follow guide [here](http://raspberrypihq.com/how-to-turn-a-raspberry-pi-into-a-wifi-router/)
+* Configured WiFi access point. Follow guide [here](http://raspberrypihq.com/how-to-turn-a-raspberry-pi-into-a-wifi-router/). NOTE: new version of hostapd can be found [here](https://github.com/jenssegers/RTL8188-hostapd/archive/v2.0.tar.gz). You may experience the issue with update-rc.d to solve it follow this [suggestion](https://groups.google.com/forum/#!topic/logstash-users/orpWBtElt0c).
 
-##Installed software requirements
+##Pre-installed software requirements
 
-* The latest stable version of NodeJS. Follow guide [here](http://weworkweplay.com/play/raspberry-pi-nodejs/) or [here](https://blog.adafruit.com/2015/02/13/download-compiled-version-of-node-js-0-12-0-stable-for-raspberry-pi-here-piday-raspberrypi-raspberry_pi/)
-* Installed NodeJs [forever](https://www.npmjs.com/package/forever) and [nodemon](https://www.npmjs.com/package/nodemon) modules in case you want to have auto-update and running application continuously.
-	
-	`$ [sudo] npm install forever -g`
-	`$ [sudo] npm install nodemon -g`
+* The latest stable version of NodeJS. Follow guide [here](http://weworkweplay.com/play/raspberry-pi-nodejs/) or [here](https://blog.adafruit.com/2015/02/13/download-compiled-version-of-node-js-0-12-0-stable-for-raspberry-pi-here-piday-raspberrypi-raspberry_pi/).
+* Installed NodeJs [forever](https://www.npmjs.com/package/forever) and [nodemon](https://www.npmjs.com/package/nodemon) modules in case you want to have auto-update and running application continuously. To install do:
+
+		$ sudo npm install forever -g
+		$ sudo npm install nodemon -g
 
 ##Running
 
@@ -39,23 +39,34 @@ To start Network Throtler just go inside the sources root directory and run:
 	
 	$ node app.js
 
-To configure Network Throttler as service/daemon use `./scripts/networkThrottler` example script. For Debian (or Linux that supports init.d ) put it inside init.d directory and run there
+To configure Network Throttler as service/daemon use `./scripts/networkThrottler` example script. For Debian (or Linux that supports init.d) put it inside init.d directory and run there:
 
-	`$ sudo update-rc.d networkThrottler defaults`. 
+	$ sudo update-rc.d networkThrottler defaults 
 
 To start throttler service application run:
 	
-	`$ /etc/init.d/networkThrottler start`
+	$ /etc/init.d/networkThrottler start
 
 To stop throttler service application run:
 	
-	`$ /etc/init.d/networkThrottler stop`
+	$ /etc/init.d/networkThrottler stop
 
 ##Logging
 
 Network Throttler will log everything to `./logs/node.log` file.
 
-For Debian the [logrotate](https://packages.debian.org/sid/logrotate) were used and configured via `./scripts/forever` example config file (need to place it to `/etc/logrotate.d/` directory).
+To rotate log files [logrotate](https://packages.debian.org/sid/logrotate) were used and configured with `./scripts/forever` example config file (need to be placed in `/etc/logrotate.d/`). Install logrotate in case your OS doesn't have it.
 
 
+##LICENSE
 
+Copyright 2015 Twilio.
+
+Licensed under the Apache License, Version 2.0 (the “License”); you may not use this file except in
+compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software distributed under the License is
+distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. See the License for the specific language governing permissions and limitations under the
+License.

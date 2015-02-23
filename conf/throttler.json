@@ -55,7 +55,7 @@
 		{
 			"name":"No Internet Connection",
 			"latency": 500,
-			"bandwidth": 1,
+			"bandwidth": 5,
 			"packetLoss": 100
 		}
 	]
