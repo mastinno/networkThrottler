@@ -8,14 +8,3 @@
   copytruncate
   compress
 }
-
-/home/pi/projects/networkThrottler/logs/error.log {
-  rotate 10
-  size 10M
-  daily
-  missingok
-  notifempty
-  sharedscripts
-  copytruncate
-  compress
-}
