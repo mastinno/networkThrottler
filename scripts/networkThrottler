@@ -16,7 +16,7 @@ case "$1" in
     echo "Starting Network Throttler"
     cd /home/pi/projects/networkThrottler
     su pi -c "mkdir -p /home/pi/projects/networkThrottler/logs"
-    su pi -c "forever -e /home/pi/projects/networkThrottler/logs/error.log -c nodemon --exitcrash --delay 5 app.js >> /home/pi/projects/networkThrottler/logs/node.log 2>&1 &"
+    su pi -c "forever -c nodemon --exitcrash --delay 5 app.js >> /home/pi/projects/networkThrottler/logs/node.log 2>&1 &"
     ;;
   stop)
     echo "Stopping Network Throttler"
