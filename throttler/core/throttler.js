@@ -1,8 +1,10 @@
 define([
 	'throttler_ipfw',
 	'throttler_tc',
-	'throttler_exec'
-], function(ipfw, tc, throttler_exec) {
+	'throttler_exec',
+	'os',
+	'underscore'
+], function(ipfw, tc, throttler_exec, os, _) {
 
 	var LINUX_OS_NAME 	= "linux";
 	var DARWIN_OS_NAME 	= "darwin";
@@ -16,13 +18,11 @@ define([
 	var _profiles;
 	var _throttlerStatus;
 	var _currentConf;
-	var _defaultNetInterface;
 
 	function init(conf) {
 		_profiles = conf.throttlerProfiles;
-		_defaultNetInterface = conf.throttlerInterface;
 		_throttlerStatus = INIT_STATUS;
-		console.log("Throttler configuration:\nProfiles: " + JSON.stringify(_profiles) + "\nDefault Net Interface: " + _defaultNetInterface);
+		console.log("Throttler configuration:\nProfiles: " + JSON.stringify(_profiles));
 	}
 
 	function getExecutor() {
@@ -53,38 +53,38 @@ define([
 
 	function validateConf(conf) {
 		var error = false;
-		var errorMsg = "Invalid ";
+		var errorMsg = "Configuration has following error(s):";
+
 		if (!isInteger(conf.latency, true)) {
-			errorMsg += "latency (only integer)";
+			errorMsg += " invalid latency (only integer);";
 			error = true;
 		}
 		if (!isInteger(conf.jitter, false)) {
-			errorMsg += ", jitter (only integer)";
+			errorMsg += " invalid jitter (only integer);";
 			error = true;
 		}
 		if (!isInteger(conf.bandwidth, true)) {
-			errorMsg += ", bandwidth (only integer)";
+			errorMsg += " invalid bandwidth (only integer);";
 			error = true;
 		}
 		if (!isNumber(conf.packetLoss, true)) {
-			errorMsg += ", packets loss (only number)";
+			errorMsg += " invalid packets loss (only number);";
 			error = true;
 		}
 		if (!isNumber(conf.packetDuplication, false)) {
-			errorMsg += ", packets duplication (only number)";
+			errorMsg += " invalid packets duplication (only number);";
 			error = true;
 		}
 		if (!isNumber(conf.packetCorruption, false)) {
-			errorMsg += ", packets corruption (only number)";
+			errorMsg += " invalid packets corruption (only number);";
 			error = true;
 		}
-		if (conf.netInterface.indexOf('wlan') == -1
-			&& conf.netInterface.indexOf('bridge') == -1) {
-			errorMsg += ", network interface (e.g. wlan..)";
+		if (!isValidNetworkInterface(conf.netInterface)) {
+			errorMsg += " " + conf.netInterface + " is invalid network inteface;";
 			error = true;
 		}
+
 		if (error) {
-			errorMsg += ".";
 			return {status: throttler_exec.FAILED_STATUS, message: errorMsg};
 		}
 		return {status: throttler_exec.SUCCESS_STATUS};
@@ -123,11 +123,6 @@ define([
 	}
 
 	function start(conf) {
-
-		if (!conf.netInterface
-			|| conf.netInterface.length == 0) {
-			conf.netInterface = _defaultNetInterface;
-		}
 
 		var res = validateConf(conf);
 		if (res.status != throttler_exec.SUCCESS_STATUS) {
@@ -229,6 +224,32 @@ define([
 		return throttler_exec.executeSync(cmd);
 	}
 
+	function getNetworkInterfacesNames() {
+
+		var ifaces = os.networkInterfaces();
+		var res = [];
+		console.log("Available netwrok interfaces: " + JSON.stringify(ifaces));
+		_.keys(ifaces).forEach(function(iface) {
+		  console.log("Interface: " + iface);
+		  res.push(iface);
+		});
+		return res;
+	}
+
+	function isValidNetworkInterface(iface) {
+		if (!iface || iface.length == 0) {
+			return false;
+		}
+		var availableIfaces = getNetworkInterfacesNames();
+		var isValid = false;
+		_.each(availableIfaces, function(i) {
+			if (i == iface) {
+				isValid = true;
+			}
+		});
+		return isValid;
+	}
+
 	return {
 		init: init,
 		start: startSafe,
@@ -239,6 +260,7 @@ define([
 		getProfilesList: getProfilesList,
 		getStatus: getStatus,
 		getCurrentConfig: getCurrentConfig,
-		execCmd: execCmd
+		execCmd: execCmd,
+		getNetworkInterfacesNames: getNetworkInterfacesNames
 	}
 });

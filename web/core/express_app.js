@@ -89,7 +89,8 @@ define([
     function loadMainView(req, res) {
         res.render('index', {  
             profiles: JSON.stringify(throttler.getProfilesList()),
-            status: JSON.stringify(throttler.getStatus())
+            status: JSON.stringify(throttler.getStatus()),
+            ifaces: JSON.stringify(throttler.getNetworkInterfacesNames())
         });
     }
 

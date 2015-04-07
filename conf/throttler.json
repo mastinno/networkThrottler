@@ -2,7 +2,6 @@
 	"http": {
     	"port": 5000
   	},
-  	"throttlerInterface": "wlan0",
   	"throttlerProfiles": [
   		{
 			"name":"GPRS (good)",
