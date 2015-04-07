@@ -89,7 +89,7 @@
 				packetLoss: $('#textPacketLoss').val(),
 				packetDuplication: $('#textPacketDuplication').val(),
 				packetCorruption: $('#textPacketCorruption').val(),
-				netInterface: $('#textNetInterface').val()
+				netInterface: $('#textNetInterface').text()
 			};
 			// showResultMessage("test","test");
 			sio.emit('startThrottler', conf, function(result) {
@@ -237,7 +237,7 @@
 								    <label for="selectNetInterface" class="col-sm-5 control-label" title="Net Interfaces" >Net Interface</label>
 								    <div class="col-sm-7">
 							      		<div class="btn-group btn-input clearfix" id="selectNetInterface">
-											<label class="btn btn-default" data-bind="label">Select Net Interface</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<label id="textNetInterface" class="btn btn-default" data-bind="label">Select Net Interface</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
 											<ul class="dropdown-menu" id="dropdownNetInterface">
 											</ul>
 										</div>
