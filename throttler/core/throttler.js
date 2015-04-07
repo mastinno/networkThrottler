@@ -7,7 +7,7 @@ define([
 	'fs'
 ], function(ipfw, tc, throttler_exec, os, _, fs) {
 
-	var CURRENT_STATUS_FILE_PATH = "./throttlerStatus.json"
+	var CURRENT_STATUS_FILE_PATH = "./conf/throttlerStatus.json"
 	var LINUX_OS_NAME 	= "linux";
 	var DARWIN_OS_NAME 	= "darwin";
 	var FREEBSD_OS_NAME = "freebsd";
