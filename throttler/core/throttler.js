@@ -3,9 +3,11 @@ define([
 	'throttler_tc',
 	'throttler_exec',
 	'os',
-	'underscore'
-], function(ipfw, tc, throttler_exec, os, _) {
+	'underscore',
+	'fs'
+], function(ipfw, tc, throttler_exec, os, _, fs) {
 
+	var CURRENT_STATUS_FILE_PATH = "./throttlerStatus.json"
 	var LINUX_OS_NAME 	= "linux";
 	var DARWIN_OS_NAME 	= "darwin";
 	var FREEBSD_OS_NAME = "freebsd";
@@ -20,9 +22,33 @@ define([
 	var _currentConf;
 
 	function init(conf) {
+
 		_profiles = conf.throttlerProfiles;
-		_throttlerStatus = INIT_STATUS;
-		console.log("Throttler configuration:\nProfiles: " + JSON.stringify(_profiles));
+
+		if (fs.existsSync(CURRENT_STATUS_FILE_PATH)) {
+			try {
+				var currentStatus = JSON.parse(fs.readFileSync(CURRENT_STATUS_FILE_PATH, {encoding:'utf8'}));
+				_currentConf = currentStatus.conf;
+				_throttlerStatus = currentStatus.status;
+			}
+			catch(err) {
+				console.error("Failed read current configuration: " + err + ". Removing broken file.");
+				fs.unlinkSync(CURRENT_STATUS_FILE_PATH);
+				_currentConf = undefined;
+				_throttlerStatus = undefined;
+			}
+		}
+
+		if (!_throttlerStatus) {
+			_throttlerStatus = INIT_STATUS;
+		}
+
+		console.log("Throttler configuration:\n\tProfiles: " 
+			+ JSON.stringify(_profiles)
+			+ "\n\tCurrent configuration: "
+			+ JSON.stringify(_currentConf)
+			+ "\n\tCurrent Status: "
+			+ _throttlerStatus);
 	}
 
 	function getExecutor() {
@@ -147,6 +173,7 @@ define([
 		}
 		_currentConf = conf;
 		_throttlerStatus = STARTED_STATUS;
+		fs.writeFileSync(CURRENT_STATUS_FILE_PATH, JSON.stringify({conf: _currentConf, status: _throttlerStatus}));
 		return {
 			status:res.status, 
 			message: restarted ? "Throttler was re-started" : "Throttler was started", 
@@ -180,6 +207,7 @@ define([
 		}
 		_currentConf = undefined;
 		_throttlerStatus = STOPPED_STATUS;
+		fs.unlinkSync(CURRENT_STATUS_FILE_PATH);
 		return {
 			status:res.status, 
 			message: "Throttler was stopped", 
