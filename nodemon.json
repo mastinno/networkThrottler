@@ -1,6 +1,6 @@
 {
       "ext": "js ejs json",
       "exitcrash": true,
-      "ignore": [".git", "node_modules", "logs", "scripts"],
+      "ignore": [".git", "node_modules", "logs", "scripts", "./conf/throttlerStatus.json"],
       "verbose": true
 }

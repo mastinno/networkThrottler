@@ -91,7 +91,6 @@
 				packetCorruption: $('#textPacketCorruption').val(),
 				netInterface: $('#textNetInterface').text()
 			};
-			// showResultMessage("test","test");
 			sio.emit('startThrottler', conf, function(result) {
 				showResultMessage(result.status, result.message);
 				updateCurrentStatusView(result.throttlerStatus);
@@ -99,7 +98,6 @@
 		}
 
 		function stopThrottler() {
-			// showResultMessage("test","test");
 			sio.emit('stopThrottler', function(result) {
 				showResultMessage(result.status, result.message);
 				updateCurrentStatusView(result.throttlerStatus);
@@ -113,7 +111,9 @@
 		}
 
 		function checkForUpdates() {
+			showSplashScreen();
 			sio.emit('checkForUpdates', function(result) {
+				showSplashScreen();
 				showResultMessage(result.status, result.message);
 			});
 		}
@@ -150,6 +150,15 @@
 			}
 		}
 
+		function showSplashScreen(show) {
+			if ($('#splashModal').hasClass('in')) {
+                $('#splashModal').modal('toggle');
+            }
+            else {
+            	$('#splashModal').modal();
+			}
+		}
+
 		function showResultMessage(status, text) {
 
 			if (status == "Success") {
@@ -177,7 +186,7 @@
 
 <body onload='initView();'>
 <div id="messageModal" class="modal fade">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="margin-top: 15%">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -188,6 +197,15 @@
             </div>
         </div>
     </div>
+</div>
+<div class="modal fade" id="splashModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog" style="margin-top: 15%">
+        <div class="modal-content">
+		    <div class="modal-header">
+		        <h3 id="call_message" style="text-align: center;">Please wait...</h3>
+		    </div>
+    	</div>
+	</div>
 </div>
 <div class="container">
 	<div class="row clearfix">
