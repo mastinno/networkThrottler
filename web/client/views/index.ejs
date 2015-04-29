@@ -87,6 +87,7 @@
 				jitter: $('#textJitter').val(),
 				bandwidth: $('#textBandwidth').val(),
 				packetLoss: $('#textPacketLoss').val(),
+				packetLossCorellation: $('#textPacketLossCorellation').val(),
 				packetDuplication: $('#textPacketDuplication').val(),
 				packetCorruption: $('#textPacketCorruption').val(),
 				netInterface: $('#textNetInterface').text()
@@ -128,6 +129,7 @@
 					$('#currentJitter').val(statusData.config.jitter);
 					$('#currentBandwidth').val(statusData.config.bandwidth);
 					$('#currentPacketLoss').val(statusData.config.packetLoss);
+					$('#currentPacketLossCorrelation').val(statusData.config.packetLossCorellation);
 					$('#currentPacketDuplication').val(statusData.config.packetDuplication);
 					$('#currentPacketCorruption').val(statusData.config.packetCorruption);
 					$('#currentNetInterface').val(statusData.config.netInterface);
@@ -137,6 +139,7 @@
 					$('#currentJitter').val("");
 					$('#currentBandwidth').val("");
 					$('#currentPacketLoss').val("");
+					$('#currentPacketLossCorrelation').val("");
 					$('#currentPacketDuplication').val("");
 					$('#currentPacketCorruption').val("");
 					$('#currentNetInterface').val("");
@@ -286,6 +289,12 @@
 								    </div>
 							  	</div>
 							  	<div class="form-group">
+							    	<label for="textPacketLossCorellation" class="col-sm-5 control-label">Packets Loss Correlation</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textPacketLossCorellation" placeholder="Packets loss corellation percentage">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
 							    	<label for="textPacketDuplication" class="col-sm-5 control-label">Packets Duplication</label>
 								    <div class="col-sm-7">
 							      		<input class="form-control" id="textPacketDuplication" placeholder="Packets dupplication percentage">
@@ -342,6 +351,12 @@
 							    	<label for="currentPacketLoss" class="col-sm-5 control-label">Packets Loss</label>
 								    <div class="col-sm-7">
 							      		<input disabled="true" class="form-control" id="currentPacketLoss" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentPacketLossCorrelation" class="col-sm-5 control-label">Packets Loss Correlation</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentPacketLossCorrelation" placeholder="None">
 								    </div>
 							  	</div>
 							  	<div class="form-group">
