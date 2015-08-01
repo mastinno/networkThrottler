@@ -38,8 +38,12 @@
 		var profiles = <%- profiles %>;
 		var currentStatus = <%- status %>;
 		var ifaces = <%- ifaces %>;
+		var blockerProtocols = <%- blockerProtocols %>;
+		var trafficTypes = <%- trafficTypes %>;
 
 		function initView() {
+
+			// Throttler initialization
 
 			var dropdownProfiles = $("#dropdownProfiles");
 			for (var i = 0; i < profiles.length; i++) {
@@ -77,6 +81,41 @@
 				}
 				return false;
 			});
+
+			// Blocker initialization
+
+			var dropdownBlockerNetInterface = $("#dropdownBlockerNetInterface");
+			for (var i = 0; i < ifaces.length; i++) {
+				var li = document.createElement("li");
+	            var link = document.createElement("a");             
+	            var text = document.createTextNode(ifaces[i]);
+	            link.appendChild(text);
+	            link.href = "#";
+	            li.appendChild(link);
+	            dropdownBlockerNetInterface.append(li);
+			}
+
+			var dropdownBlockerProtocol = $("#dropdownBlockerProtocol");
+			for (var i = 0; i < blockerProtocols.length; i++) {
+				var li = document.createElement("li");
+	            var link = document.createElement("a");             
+	            var text = document.createTextNode(blockerProtocols[i]);
+	            link.appendChild(text);
+	            link.href = "#";
+	            li.appendChild(link);
+	            dropdownBlockerProtocol.append(li);
+			}
+
+			var dropdownBlockerTrafficType = $("#dropdownTrafficType");
+			for (var i = 0; i < trafficTypes.length; i++) {
+				var li = document.createElement("li");
+	            var link = document.createElement("a");             
+	            var text = document.createTextNode(trafficTypes[i]);
+	            link.appendChild(text);
+	            link.href = "#";
+	            li.appendChild(link);
+	            dropdownBlockerTrafficType.append(li);
+			}
 
 			updateCurrentStatusView(currentStatus);
 		};
@@ -231,6 +270,12 @@
 					<li>
 						<a href="#panelStatus" data-toggle="tab">Throttler Status</a>
 					</li>
+					<li>
+						<a href="#panelBlockerSettings" data-toggle="tab">Traffic Blocker Settings</a>
+					</li>
+					<li>
+						<a href="#panelBlockerStatus" data-toggle="tab">Traffic Blocker Status</a>
+					</li>
 					<!-- <li>
 						<a href="#panelCmd" data-toggle="tab">Execute Shell CMD</a>
 					</li> -->
@@ -378,6 +423,106 @@
 
 						<div class="form-group" style="margin-top: 10px" >
 					    	<label for="shellOutput" class="col-sm-2 control-label">Shell output</label>
+						    <div class="col-sm-10">
+					      		<textarea disabled="true" style="resize: none" class="form-control" id="shellOutput" rows="5"></textarea>
+						    </div>
+					  	</div>
+
+					  	<div class="row clearfix" style="text-align: center">
+					  		<button class="btn btn-default" type="submit" style="margin-top: 20px" onclick="getStatus();">Get Status</button>
+				  		</div>
+					</div>
+
+					<div class="tab-pane well" id="panelBlockerSettings">
+						<div class="row clearfix form-horizontal">
+							<div class="col-md-offset-2 col-md-6 column">
+							  	<div class="form-group">
+							    	<!-- <label for="textNetInterface" class="col-sm-5 control-label">Net Interface</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textNetInterface" placeholder="Network Interface Name (default: wlan0)">
+								    </div> -->
+								    <label for="selectBlockerNetInterface" class="col-sm-5 control-label" title="Net Interfaces" >Net Interface</label>
+								    <div class="col-sm-7">
+							      		<div class="btn-group btn-input clearfix" id="selectBlockerNetInterface">
+											<label id="textBlockerNetInterface" class="btn btn-default" data-bind="label">Select Net Interface</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<ul class="dropdown-menu" id="dropdownBlockerNetInterface">
+											</ul>
+										</div>
+								    </div>
+							  	</div>
+							  	<div class="form-group clearfix">
+							    	<label for="selectBlockerProtocol" class="col-sm-5 control-label" title="Blocker Protocol" >Protocol</label>
+								    <div class="col-sm-7">
+							      		<div class="btn-group btn-input clearfix" id="selectBlockerProtocol">
+											<label class="btn btn-default" data-bind="label">Select Protocol</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<ul class="dropdown-menu" id="dropdownBlockerProtocol">
+											</ul>
+										</div>
+								    </div>
+							  	</div>
+							  	<div class="form-group clearfix">
+							    	<label for="selectBlockerTrafficType" class="col-sm-5 control-label" title="Blocker Traffic Type" >Traffic Type</label>
+								    <div class="col-sm-7">
+							      		<div class="btn-group btn-input clearfix" id="selectBlockerTrafficType">
+											<label class="btn btn-default" data-bind="label">Select Traffic Type</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<ul class="dropdown-menu" id="dropdownTrafficType">
+											</ul>
+										</div>
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="textBlockerPort" class="col-sm-5 control-label">Port</label>
+								    <div class="col-sm-7">
+							      		<input class="form-control" id="textBlockerPort" placeholder="Port to block traffic">
+								    </div>
+							  	</div>
+							  	<div class="row clearfix" style="text-align: center">
+							  		<button class="btn btn-default" type="submit" onclick="startBlocker();"> &nbsp;&nbsp; Block &nbsp;&nbsp; </button>
+									<button class="btn btn-default" type="button" onclick="stopBlocker();"> &nbsp; Unblock &nbsp; </button>
+						  		</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="tab-pane well" id="panelBlockerStatus">
+						<div class="row clearfix form-horizontal">
+							<div class="col-md-offset-2 col-md-6 column">
+								<div class="form-group">
+							    	<label for="currentBlockerStatus" class="col-sm-5 control-label">Current Status</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentBlockerStatus" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentBlockerNetInterface" class="col-sm-5 control-label">Net Interface</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentBlockerNetInterface" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentBlockerProtocol" class="col-sm-5 control-label">Protocol</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentBlockerProtocol" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentBlockerTrafficType" class="col-sm-5 control-label">Traffic Type</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentBlockerTrafficType" placeholder="None">
+								    </div>
+							  	</div>
+							  	<div class="form-group">
+							    	<label for="currentBlockerPort" class="col-sm-5 control-label">Port</label>
+								    <div class="col-sm-7">
+							      		<input disabled="true" class="form-control" id="currentBlockerPort" placeholder="None">
+								    </div>
+							  	</div>
+							</div>
+
+						</div>
+
+						<div class="form-group" style="margin-top: 10px" >
+					    	<label for="blockerShellOutput" class="col-sm-2 control-label">Shell output</label>
 						    <div class="col-sm-10">
 					      		<textarea disabled="true" style="resize: none" class="form-control" id="shellOutput" rows="5"></textarea>
 						    </div>

@@ -33,7 +33,7 @@ define([
 	}
 
 	function check() {
-		return TC_CHECK;
+		return throttler_exec.executeSync(TC_CHECK);
 	}
 
 	function list() {

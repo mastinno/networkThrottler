@@ -57,5 +57,11 @@
 			"bandwidth": 5,
 			"packetLoss": 100
 		}
+	],
+	"blockerTraficTypes": [
+		"inbound", "outbound"
+	],
+	"blockerProtocols": [
+		"tcp","udp"
 	]
 }

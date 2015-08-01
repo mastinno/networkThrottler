@@ -1,11 +1,12 @@
 define([
 	'throttler_ipfw',
 	'throttler_tc',
+	'blocker_iptables',
 	'throttler_exec',
 	'os',
 	'underscore',
 	'fs'
-], function(ipfw, tc, throttler_exec, os, _, fs) {
+], function(ipfw, tc, iptables, throttler_exec, os, _, fs) {
 
 	var CURRENT_STATUS_FILE_PATH = "./conf/throttlerStatus.json"
 	var LINUX_OS_NAME 	= "linux";
@@ -20,6 +21,10 @@ define([
 	var _profiles;
 	var _throttlerStatus;
 	var _currentConf;
+
+	var _blockerProtocols;
+	var _blockerTraficTypes;
+	var _blockerStatus;
 
 	function init(conf) {
 
@@ -43,6 +48,9 @@ define([
 			_throttlerStatus = INIT_STATUS;
 		}
 
+		_blockerProtocols = conf.blockerProtocols;
+		_blockerTraficTypes = conf.blockerTraficTypes;
+
 		console.log("Throttler configuration:\n\tProfiles: " 
 			+ JSON.stringify(_profiles)
 			+ "\n\tCurrent configuration: "
@@ -58,6 +66,32 @@ define([
 		switch(process.platform) {
 			case LINUX_OS_NAME:
 				executor = tc;
+				break;
+			case DARWIN_OS_NAME:
+				executor = ipfw;
+				break;
+			case FREEBSD_OS_NAME:
+				executor = ipfw;
+				break;
+			case WIN_OS_NAME:
+				break;
+			default:
+				break;
+		}
+
+		if (!executor) {
+			throw "OS is not supported";
+		}
+		return executor;
+	}
+
+	function getBlockerExecutor() {
+
+		var executor;
+
+		switch(process.platform) {
+			case LINUX_OS_NAME:
+				executor = iptables;
 				break;
 			case DARWIN_OS_NAME:
 				executor = ipfw;
@@ -264,6 +298,14 @@ define([
 		return res;
 	}
 
+	function getBlockerProtocols() {
+		return _blockerProtocols;
+	}
+
+	function getBlockerTrafficTypes() {
+		return _blockerTraficTypes;
+	}
+
 	function isValidNetworkInterface(iface) {
 		if (!iface || iface.length == 0) {
 			return false;
@@ -289,6 +331,8 @@ define([
 		getStatus: getStatus,
 		getCurrentConfig: getCurrentConfig,
 		execCmd: execCmd,
-		getNetworkInterfacesNames: getNetworkInterfacesNames
+		getNetworkInterfacesNames: getNetworkInterfacesNames,
+		getBlockerProtocols: getBlockerProtocols,
+		getBlockerTrafficTypes: getBlockerTrafficTypes
 	}
 });

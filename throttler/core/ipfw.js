@@ -8,6 +8,9 @@ define([
 	var IPWF_EXISTS_CMD   		= 'sudo ipfw list | grep "pipe 1"'
 	var IPWF_CHECK_CMD    		= 'sudo ipfw list'
 
+	var IPWF_BLOCK_TRAFFIC_CMD 	= 'sudo ipfw add 200 deny %s from any to any %s %s on %s'
+	var IPWF_UNBLOCK_TRAFFIC_CMD 	= 'sudo ipfw add 200 deny %s from any to any %s %s on %s'
+
 	function start(conf) {
 
 		console.log("IPWF start conf " + JSON.stringify(conf) + ", cmd - " + IPWF_ADD_PIPE_CMD + conf.netInterface);
@@ -25,7 +28,7 @@ define([
 	}
 
 	function check() {
-		return IPWF_CHECK_CMD;
+		return throttler_exec.executeSync(IPWF_CHECK_CMD);
 	}
 
 	function list() {
@@ -58,11 +61,50 @@ define([
 		return cmd;
 	}
 
+	function startBlocking(conf) {
+		var cmd = util.format(IPWF_BLOCK_TRAFFIC_CMD, conf.proto, conf.port, getTrafficDirectionForCmd(conf.direction), conf.iface);
+		console.log("IPFW Blocker start cmd: " + cmd);
+		return throttler_exec.executeSync(cmd);
+	}
+
+	function stopBlocking(conf) {
+		var cmd = util.format(IPWF_UNBLOCK_TRAFFIC_CMD, conf.proto, conf.port, getTrafficDirectionForCmd(conf.direction), conf.iface);
+		console.log("IPFW Blocker stop cmd: " + cmd);
+		return throttler_exec.executeSync(cmd);
+	}
+
+	function listBlocking() {
+
+	}
+
+	function checkBlocking() {
+
+	}
+
+	function existsBlocking() {
+		
+	}
+
+	function getTrafficDirectionForCmd(direction) {
+		if (direction == "inbound") {
+			return "in";
+		}
+		else {
+			return "out"
+		}
+	}
+
 	return {
 		start: start,
 		stop: stop,
 		list: list,
 		check: check,
-		exists: exists
+		exists: exists,
+
+		startBlocking: startBlocking,
+		stopBlocking: stopBlocking,
+		listBlocking: listBlocking,
+		checkBlocking: checkBlocking,
+		existsBlocking: existsBlocking
 	}
 });

@@ -11,6 +11,7 @@ requirejs.config({
         'throttler': 'throttler/core/throttler',
         'throttler_ipfw': 'throttler/core/ipfw',
         'throttler_tc': 'throttler/core/tc',
+        'blocker_iptables': 'throttler/core/iptables',
         'throttler_exec': 'throttler/core/throttler_exec'
     }
 });

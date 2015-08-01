@@ -90,7 +90,9 @@ define([
         res.render('index', {  
             profiles: JSON.stringify(throttler.getProfilesList()),
             status: JSON.stringify(throttler.getStatus()),
-            ifaces: JSON.stringify(throttler.getNetworkInterfacesNames())
+            ifaces: JSON.stringify(throttler.getNetworkInterfacesNames()),
+            blockerProtocols: JSON.stringify(throttler.getBlockerProtocols()),
+            trafficTypes: JSON.stringify(throttler.getBlockerTrafficTypes())
         });
     }
 
