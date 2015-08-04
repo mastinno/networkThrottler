@@ -3,7 +3,7 @@ define([
 	'util'
 ], function(throttler_exec, util) {
 
-	var IPTABLES_BLOCK_TRAFFIC_CMD 		= 'sudo /sbin/iptables -A %s%s-p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
+	var IPTABLES_BLOCK_TRAFFIC_CMD 		= 'sudo /sbin/iptables -I %s%s-p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
 	var IPTABLES_UNBLOCK_TRAFFIC_CMD 	= 'sudo /sbin/iptables -D %s%s-p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
 	var IPTABLES_CHECK_CMD 				= 'sudo iptables --list'
 	var IPTABLES_BLOCKER_EXISTS_CMD   	= 'sudo iptables --list | grep "network throttler blocker rule"'
