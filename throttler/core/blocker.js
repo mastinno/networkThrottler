@@ -101,6 +101,10 @@ define([
 			errorMsg += " can't block SSH port :) ;";
 			error = true;
 		}
+		if (conf.port == "5000") {
+			errorMsg += " can't block Throttler web-application port :) ;";
+			error = true;
+		}
 		if (!utils.isValidNetworkInterface(conf.netInterface)) {
 			errorMsg += " " + conf.netInterface + " is invalid network inteface;";
 			error = true;

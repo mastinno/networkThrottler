@@ -18,7 +18,7 @@ define([
 
 		return {
 			status: throttler_exec.SUCCESS_STATUS,
-			message: "Update was found and server will be restarted. Please reload page to get the latest updates."
+			message: "Update was found and server will be restarted. Please reload the current page to get the latest updates."
 		};
 	}
 
