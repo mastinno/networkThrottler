@@ -43,7 +43,7 @@ define([
 			return "INPUT";
 		}
 		else {
-			return "OUTPUT"
+			return "FORWARD"
 		}
 	}
 
