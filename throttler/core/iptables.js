@@ -3,20 +3,34 @@ define([
 	'util'
 ], function(throttler_exec, util) {
 
-	var IPTABLES_BLOCK_TRAFFIC_CMD 		= 'sudo /sbin/iptables -A %s -i %s -p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
-	var IPTABLES_UNBLOCK_TRAFFIC_CMD 	= 'sudo /sbin/iptables -D %s -i %s -p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
+	var IPTABLES_BLOCK_TRAFFIC_CMD 		= 'sudo /sbin/iptables -A %s%s-p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
+	var IPTABLES_UNBLOCK_TRAFFIC_CMD 	= 'sudo /sbin/iptables -D %s%s-p %s --dport %s -j DROP -m comment --comment "network throttler blocker rule"';
 	var IPTABLES_CHECK_CMD 				= 'sudo iptables --list'
 	var IPTABLES_BLOCKER_EXISTS_CMD   	= 'sudo iptables --list | grep "network throttler blocker rule"'
 
 
 	function start(conf) {
-		var cmd = util.format(IPTABLES_BLOCK_TRAFFIC_CMD, getTrafficDirectionForCmd(conf.direction), conf.netInterface, conf.proto, conf.port);
+
+		var direction = getTrafficDirectionForCmd(conf.direction);
+		var interfaceParam = util.format(" -i %s ", direction);
+		if (direction == "OUTPUT") {
+			interfaceParam = " ";
+		}
+
+		var cmd = util.format(IPTABLES_BLOCK_TRAFFIC_CMD, interfaceParam, conf.netInterface, conf.proto, conf.port);
 		console.log("IPTables start cmd: " + cmd);
 		return throttler_exec.executeSync(cmd);
 	}
 
 	function stop(conf) {
-		var cmd = util.format(IPTABLES_UNBLOCK_TRAFFIC_CMD, getTrafficDirectionForCmd(conf.direction), conf.netInterface, conf.proto, conf.port);
+
+		var direction = getTrafficDirectionForCmd(conf.direction);
+		var interfaceParam = util.format(" -i %s ", direction);
+		if (direction == "OUTPUT") {
+			interfaceParam = " ";
+		}
+
+		var cmd = util.format(IPTABLES_UNBLOCK_TRAFFIC_CMD, direction, conf.netInterface, conf.proto, conf.port);
 		console.log("IPTables stop cmd: " + cmd);
 		return throttler_exec.executeSync(cmd);
 	}
@@ -41,6 +55,9 @@ define([
 	function getTrafficDirectionForCmd(direction) {
 		if (direction == "inbound") {
 			return "INPUT";
+		}
+		else if (direction == "outbound") {
+			return "OUTPUT"
 		}
 		else {
 			return "FORWARD"

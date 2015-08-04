@@ -59,7 +59,7 @@
 		}
 	],
 	"blockerTraficTypes": [
-		"inbound", "outbound"
+		"inbound", "outbound","forward"
 	],
 	"blockerProtocols": [
 		"tcp","udp"
