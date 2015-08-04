@@ -12,12 +12,12 @@ define([
 	function start(conf) {
 
 		var direction = getTrafficDirectionForCmd(conf.direction);
-		var interfaceParam = util.format(" -i %s ", direction);
+		var interfaceParam = util.format(" -i %s ", conf.netInterface);
 		if (direction == "OUTPUT") {
 			interfaceParam = " ";
 		}
 
-		var cmd = util.format(IPTABLES_BLOCK_TRAFFIC_CMD, interfaceParam, conf.netInterface, conf.proto, conf.port);
+		var cmd = util.format(IPTABLES_BLOCK_TRAFFIC_CMD, direction, interfaceParam, conf.proto, conf.port);
 		console.log("IPTables start cmd: " + cmd);
 		return throttler_exec.executeSync(cmd);
 	}
@@ -25,12 +25,12 @@ define([
 	function stop(conf) {
 
 		var direction = getTrafficDirectionForCmd(conf.direction);
-		var interfaceParam = util.format(" -i %s ", direction);
+		var interfaceParam = util.format(" -i %s ", conf.netInterface);
 		if (direction == "OUTPUT") {
 			interfaceParam = " ";
 		}
 
-		var cmd = util.format(IPTABLES_UNBLOCK_TRAFFIC_CMD, direction, conf.netInterface, conf.proto, conf.port);
+		var cmd = util.format(IPTABLES_UNBLOCK_TRAFFIC_CMD, direction, interfaceParam, conf.proto, conf.port);
 		console.log("IPTables stop cmd: " + cmd);
 		return throttler_exec.executeSync(cmd);
 	}
