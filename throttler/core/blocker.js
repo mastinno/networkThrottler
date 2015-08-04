@@ -1,14 +1,13 @@
 define([
 	'throttler_ipfw',
-	'throttler_tc',
 	'blocker_iptables',
 	'throttler_exec',
 	'utils',
 	'underscore',
 	'fs'
-], function(ipfw, tc, iptables, throttler_exec, utils, _, fs) {
+], function(ipfw, iptables, throttler_exec, utils, _, fs) {
 
-	var CURRENT_STATUS_FILE_PATH = "./conf/throttlerStatus.json"
+	var CURRENT_STATUS_FILE_PATH = "./conf/blockerStatus.json"
 	var LINUX_OS_NAME 	= "linux";
 	var DARWIN_OS_NAME 	= "darwin";
 	var FREEBSD_OS_NAME = "freebsd";
@@ -18,38 +17,42 @@ define([
 	var STARTED_STATUS  = "Started";
 	var STOPPED_STATUS  = "Stopped";
 
-	var _profiles;
-	var _throttlerStatus;
+	var _blockerProtocols;
+	var _blockerTraficTypes;
+	var _blockerStatus;
 	var _currentConf;
 
 	function init(conf) {
-
-		_profiles = conf.throttlerProfiles;
 
 		if (fs.existsSync(CURRENT_STATUS_FILE_PATH)) {
 			try {
 				var currentStatus = JSON.parse(fs.readFileSync(CURRENT_STATUS_FILE_PATH, {encoding:'utf8'}));
 				_currentConf = currentStatus.conf;
-				_throttlerStatus = currentStatus.status;
+				_blockerStatus = currentStatus.status;
 			}
 			catch(err) {
 				console.error("Failed read current configuration: " + err + ". Removing broken file.");
 				fs.unlinkSync(CURRENT_STATUS_FILE_PATH);
 				_currentConf = undefined;
-				_throttlerStatus = undefined;
+				_blockerStatus = undefined;
 			}
 		}
 
-		if (!_throttlerStatus) {
-			_throttlerStatus = INIT_STATUS;
+		if (!_blockerStatus) {
+			_blockerStatus = INIT_STATUS;
 		}
 
-		console.log("Throttler configuration:\n\tProfiles: " 
-			+ JSON.stringify(_profiles)
+		_blockerProtocols = conf.blockerProtocols;
+		_blockerTraficTypes = conf.blockerTraficTypes;
+
+		console.log("Blocker configuration:\n\tSupported Protocols: " 
+			+ JSON.stringify(_blockerProtocols)
+			+ "\n\tSupported Traffic Types: "
+			+ JSON.stringify(_blockerTraficTypes)
 			+ "\n\tCurrent configuration: "
 			+ JSON.stringify(_currentConf)
 			+ "\n\tCurrent Status: "
-			+ _throttlerStatus);
+			+ _blockerStatus);
 	}
 
 	function getExecutor() {
@@ -58,7 +61,7 @@ define([
 
 		switch(process.platform) {
 			case LINUX_OS_NAME:
-				executor = tc;
+				executor = iptables;
 				break;
 			case DARWIN_OS_NAME:
 				executor = ipfw;
@@ -82,28 +85,20 @@ define([
 		var error = false;
 		var errorMsg = "Configuration has following error(s):";
 
-		if (!utils.isInteger(conf.latency, true)) {
-			errorMsg += " invalid latency (only integer);";
+		if (!_.contains(getBlockerTrafficTypes(), conf.direction)) {
+			errorMsg += " invalid traffic direction (only " + JSON.stringify(getBlockerTrafficTypes()) + " are supported);";
 			error = true;
 		}
-		if (!utils.isInteger(conf.jitter, false)) {
-			errorMsg += " invalid jitter (only integer);";
+		if (!_.contains(getBlockerProtocols(), conf.proto)) {
+			errorMsg += " invalid protocol (only " + JSON.stringify(getBlockerProtocols()) + " are supported);";
 			error = true;
 		}
-		if (!utils.isInteger(conf.bandwidth, true)) {
-			errorMsg += " invalid bandwidth (only integer);";
+		if (!utils.isInteger(conf.port, true)) {
+			errorMsg += " invalid port (only integer);";
 			error = true;
 		}
-		if (!utils.isNumber(conf.packetLoss, true)) {
-			errorMsg += " invalid packets loss (only number);";
-			error = true;
-		}
-		if (!utils.isNumber(conf.packetDuplication, false)) {
-			errorMsg += " invalid packets duplication (only number);";
-			error = true;
-		}
-		if (!utils.isNumber(conf.packetCorruption, false)) {
-			errorMsg += " invalid packets corruption (only number);";
+		if (conf.port == "22") {
+			errorMsg += " can't block SSH port :) ;";
 			error = true;
 		}
 		if (!utils.isValidNetworkInterface(conf.netInterface)) {
@@ -117,107 +112,21 @@ define([
 		return {status: throttler_exec.SUCCESS_STATUS};
 	}
 
-	function startSafe(conf) {
-		var res = {};
-		try {
-			res = start(conf);
-		}
-		catch(err) {
-			console.error("Throttler start error: " + err);
-			res = {
-				status: throttler_exec.FAILED_STATUS, 
-				message: err.message
-			};
-		}
-		return res;
-	}
-
-	function start(conf) {
-
-		var res = validateConf(conf);
-		if (res.status != throttler_exec.SUCCESS_STATUS) {
-			console.log("Can't start Throttler - bad config. Error: " + JSON.stringify(res));
-			return res;
-		}
-
-		var restarted = false;
-		if (_throttlerStatus == STARTED_STATUS) {
-			var res = stop();
-			if (res.status != throttler_exec.SUCCESS_STATUS) {
-				console.log("Can't re-start Throttler. Error: " + JSON.stringify(res));
-				return {status: throttler_exec.FAILED_STATUS, message: res.message};
-			}
-			restarted = true;
-		}
-
-		res = getExecutor().start(conf);
-		if (res.status != throttler_exec.SUCCESS_STATUS) {
-			console.log("Can't start Throttler. Error: " + JSON.stringify(res));
-			return res;
-		}
-		_currentConf = conf;
-		_throttlerStatus = STARTED_STATUS;
-		fs.writeFileSync(CURRENT_STATUS_FILE_PATH, JSON.stringify({conf: _currentConf, status: _throttlerStatus}));
-		return {
-			status:res.status, 
-			message: restarted ? "Throttler was re-started" : "Throttler was started", 
-			throttlerStatus: {status: STARTED_STATUS, config: _currentConf}
-		};
-	}
-
-	function stopSafe() {
-		try {
-			return stop();
-		}
-		catch(err) {
-			console.error("Throttler stop error: " + err);
-			return {
-				status: throttler_exec.FAILED_STAUS, 
-				message: err.message
-			};
-		}
-	}
-
-	function stop() {
-
-		if (!_currentConf) {
-			console.log("Throttler wasn't started - nothing to stop");
-			return {status:throttler_exec.FAILED_STATUS, message: "Throttler wasn't started"};
-		}
-		var res = getExecutor().stop(_currentConf);
-		if (res.status != throttler_exec.SUCCESS_STATUS) {
-			console.log("Can't stop Throttler. Error: " + JSON.stringify(res));
-			return res;
-		}
-		_currentConf = undefined;
-		_throttlerStatus = STOPPED_STATUS;
-		fs.unlinkSync(CURRENT_STATUS_FILE_PATH);
-		return {
-			status:res.status, 
-			message: "Throttler was stopped", 
-			throttlerStatus: {status: STOPPED_STATUS}
-		};
-	}
-
 	function check() {
-		return getExecutor().check();
+		return getExecutor().checkBlocking();
 	}
 
 	function list() {
-		return getExecutor().list();
+		return getExecutor().listBlocking();
 	}
 
 	function exists() {
-		return getExecutor().exists();
-	}
-
-	function getProfilesList() {
-		return _profiles;
+		return getExecutor().existsBlocking();
 	}
 
 	function getStatus() {
 		
-		var result = {status:_throttlerStatus};
+		var result = {status:_blockerStatus};
 		if (_currentConf) {
 			result.config = _currentConf;
 		}
@@ -228,12 +137,98 @@ define([
 		return result;
 	}
 
+	function startSafe(conf) {
+		var res = {};
+		try {
+			res = startBlocker(conf);
+		}
+		catch(err) {
+			console.error("Blocker start error: " + err);
+			res = {
+				status: throttler_exec.FAILED_STATUS, 
+				message: err.message
+			};
+		}
+		return res;
+	}
+
+	function startBlocker(conf) {
+
+		var res = validateConf(conf);
+		if (res.status != throttler_exec.SUCCESS_STATUS) {
+			console.log("Can't start Blocker - bad config. Error: " + JSON.stringify(res));
+			return res;
+		}
+
+		var restarted = false;
+		if (_blockerStatus == STARTED_STATUS) {
+			var res = stop();
+			if (res.status != throttler_exec.SUCCESS_STATUS) {
+				console.log("Can't re-start Blocker. Error: " + JSON.stringify(res));
+				return {status: throttler_exec.FAILED_STATUS, message: res.message};
+			}
+			restarted = true;
+		}
+
+		res = getExecutor().startBlocking(conf);
+		if (res.status != throttler_exec.SUCCESS_STATUS) {
+			console.log("Can't start Blocker. Error: " + JSON.stringify(res));
+			return res;
+		}
+		_currentConf = conf;
+		_blockerStatus = STARTED_STATUS;
+		fs.writeFileSync(CURRENT_STATUS_FILE_PATH, JSON.stringify({conf: _currentConf, status: _blockerStatus}));
+		return {
+			status:res.status, 
+			message: restarted ? "Blocker was re-started" : "Blocker was started", 
+			throttlerStatus: {status: STARTED_STATUS, config: _currentConf}
+		};
+	}
+
+	function stopSafe() {
+		try {
+			return stop();
+		}
+		catch(err) {
+			console.error("Blocker stop error: " + err);
+			return {
+				status: throttler_exec.FAILED_STAUS, 
+				message: err.message
+			};
+		}
+	}
+
+	function stop() {
+
+		if (!_currentConf) {
+			console.log("Blocker wasn't started - nothing to stop");
+			return {status:throttler_exec.FAILED_STATUS, message: "Blocker wasn't started"};
+		}
+		var res = getExecutor().stopBlocking(_currentConf);
+		if (res.status != throttler_exec.SUCCESS_STATUS) {
+			console.log("Can't stop Blocker. Error: " + JSON.stringify(res));
+			return res;
+		}
+		_currentConf = undefined;
+		_blockerStatus = STOPPED_STATUS;
+		fs.unlinkSync(CURRENT_STATUS_FILE_PATH);
+		return {
+			status:res.status, 
+			message: "Blocker was stopped", 
+			throttlerStatus: {status: STOPPED_STATUS}
+		};
+	}
+
 	function getCurrentConfig() {
 		return _currentConf;
 	}
 
-	function execCmd(cmd) {
-		return throttler_exec.executeSync(cmd);
+	function getBlockerProtocols() {
+		return _blockerProtocols;
+	}
+
+	function getBlockerTrafficTypes() {
+		return _blockerTraficTypes;
 	}
 
 	return {
@@ -243,8 +238,8 @@ define([
 		list: list,
 		check: check,
 		exists: exists,
-		getProfilesList: getProfilesList,
 		getStatus: getStatus,
-		getCurrentConfig: getCurrentConfig
+		getBlockerProtocols: getBlockerProtocols,
+		getBlockerTrafficTypes: getBlockerTrafficTypes
 	}
 });

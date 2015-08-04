@@ -1,6 +1,7 @@
 define([
-	'throttler_exec'
-], function(throttler_exec) {
+	'throttler_exec',
+	'util'
+], function(throttler_exec, util) {
 
 	var IPWF_ADD_PIPE_CMD  		= 'sudo ipfw add 1 pipe 1 ip from any to any via '
 	var IPWF_DELETE_PIPE_CMD 	= 'sudo ipfw delete 1'
@@ -8,8 +9,10 @@ define([
 	var IPWF_EXISTS_CMD   		= 'sudo ipfw list | grep "pipe 1"'
 	var IPWF_CHECK_CMD    		= 'sudo ipfw list'
 
-	var IPWF_BLOCK_TRAFFIC_CMD 	= 'sudo ipfw add 200 deny %s from any to any %s %s on %s'
-	var IPWF_UNBLOCK_TRAFFIC_CMD 	= 'sudo ipfw add 200 deny %s from any to any %s %s on %s'
+	var IPWF_BLOCK_TRAFFIC_CMD 		= 'sudo ipfw add 200 deny %s from any to any %s %s via %s'
+	var IPWF_UNBLOCK_TRAFFIC_CMD 	= 'sudo ipfw del 200'
+	var IPWF_BLOCKER_EXISTS_CMD   	= 'sudo ipfw list | grep "200"'
+	var IPWF_BLOCKER_CHECK_CMD    	= 'sudo ipfw list'
 
 	function start(conf) {
 
@@ -62,27 +65,31 @@ define([
 	}
 
 	function startBlocking(conf) {
-		var cmd = util.format(IPWF_BLOCK_TRAFFIC_CMD, conf.proto, conf.port, getTrafficDirectionForCmd(conf.direction), conf.iface);
+		var cmd = util.format(IPWF_BLOCK_TRAFFIC_CMD, conf.proto, conf.port, getTrafficDirectionForCmd(conf.direction), conf.netInterface);
 		console.log("IPFW Blocker start cmd: " + cmd);
 		return throttler_exec.executeSync(cmd);
 	}
 
 	function stopBlocking(conf) {
-		var cmd = util.format(IPWF_UNBLOCK_TRAFFIC_CMD, conf.proto, conf.port, getTrafficDirectionForCmd(conf.direction), conf.iface);
-		console.log("IPFW Blocker stop cmd: " + cmd);
-		return throttler_exec.executeSync(cmd);
+		console.log("IPFW Blocker stop cmd: " + IPWF_UNBLOCK_TRAFFIC_CMD);
+		return throttler_exec.executeSync(IPWF_UNBLOCK_TRAFFIC_CMD);
 	}
 
 	function listBlocking() {
-
+		return throttler_exec.executeSync(IPWF_BLOCKER_CHECK_CMD);
 	}
 
 	function checkBlocking() {
-
+		return throttler_exec.executeSync(IPWF_BLOCKER_CHECK_CMD);
 	}
 
 	function existsBlocking() {
-		
+		var res = throttler_exec.executeSync(IPWF_BLOCKER_EXISTS_CMD);
+		if (res.status == throttler_exec.FAILED_STATUS) {
+			return false;
+		}
+		return res.message != undefined 
+			&& res.message.length > 0;
 	}
 
 	function getTrafficDirectionForCmd(direction) {

@@ -12,12 +12,14 @@ requirejs.config({
         'throttler_ipfw': 'throttler/core/ipfw',
         'throttler_tc': 'throttler/core/tc',
         'blocker_iptables': 'throttler/core/iptables',
-        'throttler_exec': 'throttler/core/throttler_exec'
+        'throttler_exec': 'throttler/core/throttler_exec',
+        'blocker': 'throttler/core/blocker',
+        'utils': 'throttler/core/utils'
     }
 });
 
-requirejs(['nconf', 'express_app', 'throttler', 'throttler_rest'], 
-    function(nconf, express_app, throttler, throttler_rest) {
+requirejs(['nconf', 'express_app', 'throttler', 'blocker', 'throttler_rest'], 
+    function(nconf, express_app, throttler, blocker, throttler_rest) {
 
     console.log("OS: " + process.platform);
 
@@ -30,6 +32,7 @@ requirejs(['nconf', 'express_app', 'throttler', 'throttler_rest'],
     console.log(JSON.stringify(conf));
 
     throttler.init(conf);
+    blocker.init(conf);
     express_app.init(conf);
     throttler_rest.init();
 });

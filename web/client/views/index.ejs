@@ -37,6 +37,7 @@
 		var sio = io.connect(window.location.origin);
 		var profiles = <%- profiles %>;
 		var currentStatus = <%- status %>;
+		var currentBlockerStatus = <%- blockerStatus %>;
 		var ifaces = <%- ifaces %>;
 		var blockerProtocols = <%- blockerProtocols %>;
 		var trafficTypes = <%- trafficTypes %>;
@@ -82,6 +83,8 @@
 				return false;
 			});
 
+			updateCurrentStatusView(currentStatus);
+
 			// Blocker initialization
 
 			var dropdownBlockerNetInterface = $("#dropdownBlockerNetInterface");
@@ -117,7 +120,7 @@
 	            dropdownBlockerTrafficType.append(li);
 			}
 
-			updateCurrentStatusView(currentStatus);
+			updateCurrentBlockerStatusView(currentBlockerStatus);
 		};
 
 		function startThrottler() {
@@ -147,6 +150,32 @@
 		function getStatus() {
 			sio.emit('getStatus', function(result) {
 				updateCurrentStatusView(result);
+			});
+		}
+
+		function startBlocker() {
+			var conf = {
+				port: $('#textBlockerPort').val(),
+				direction: $('#textBlockerTrafficType').text(),
+				proto: $('#textBlockerProtocol').text(),
+				netInterface: $('#textBlockerNetInterface').text()
+			};
+			sio.emit('startBlocker', conf, function(result) {
+				showResultMessage(result.status, result.message);
+				updateCurrentBlockerStatusView(result.throttlerStatus);
+			});
+		}
+
+		function stopBlocker() {
+			sio.emit('stopBlocker', function(result) {
+				showResultMessage(result.status, result.message);
+				updateCurrentBlockerStatusView(result.throttlerStatus);
+			});
+		}
+
+		function getBlockerStatus() {
+			sio.emit('getBlockerStatus', function(result) {
+				updateCurrentBlockerStatusView(result);
 			});
 		}
 
@@ -188,6 +217,32 @@
 				}
 				else {
 					$('#shellOutput').val();
+				}
+			}
+		}
+
+		function updateCurrentBlockerStatusView(statusData) {
+			if (statusData) {
+				if (statusData.status) {
+					$('#currentBlockerStatus').val(statusData.status);
+				}
+				if (statusData.config) {
+					$('#currentBlockerNetInterface').val(statusData.config.netInterface);
+					$('#currentBlockerProtocol').val(statusData.config.proto);
+					$('#currentBlockerTrafficType').val(statusData.config.direction);
+					$('#currentBlockerPort').val(statusData.config.port);
+				}
+				else {
+					$('#currentBlockerNetInterface').val("");
+					$('#currentBlockerProtocol').val("");
+					$('#currentBlockerTrafficType').val("");
+					$('#currentBlockerPort').val("");
+				}
+				if (statusData.shellOutput) {
+					$('#shellBlockerOutput').val(statusData.shellOutput);
+				}
+				else {
+					$('#shellBlockerOutput').val();
 				}
 			}
 		}
@@ -437,10 +492,6 @@
 						<div class="row clearfix form-horizontal">
 							<div class="col-md-offset-2 col-md-6 column">
 							  	<div class="form-group">
-							    	<!-- <label for="textNetInterface" class="col-sm-5 control-label">Net Interface</label>
-								    <div class="col-sm-7">
-							      		<input class="form-control" id="textNetInterface" placeholder="Network Interface Name (default: wlan0)">
-								    </div> -->
 								    <label for="selectBlockerNetInterface" class="col-sm-5 control-label" title="Net Interfaces" >Net Interface</label>
 								    <div class="col-sm-7">
 							      		<div class="btn-group btn-input clearfix" id="selectBlockerNetInterface">
@@ -454,7 +505,7 @@
 							    	<label for="selectBlockerProtocol" class="col-sm-5 control-label" title="Blocker Protocol" >Protocol</label>
 								    <div class="col-sm-7">
 							      		<div class="btn-group btn-input clearfix" id="selectBlockerProtocol">
-											<label class="btn btn-default" data-bind="label">Select Protocol</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<label id="textBlockerProtocol"  class="btn btn-default" data-bind="label">Select Protocol</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
 											<ul class="dropdown-menu" id="dropdownBlockerProtocol">
 											</ul>
 										</div>
@@ -464,7 +515,7 @@
 							    	<label for="selectBlockerTrafficType" class="col-sm-5 control-label" title="Blocker Traffic Type" >Traffic Type</label>
 								    <div class="col-sm-7">
 							      		<div class="btn-group btn-input clearfix" id="selectBlockerTrafficType">
-											<label class="btn btn-default" data-bind="label">Select Traffic Type</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
+											<label id="textBlockerTrafficType"  class="btn btn-default" data-bind="label">Select Traffic Type</label> <button data-toggle="dropdown" class="btn btn-default dropdown-toggle"><span class="caret"></span></button>
 											<ul class="dropdown-menu" id="dropdownTrafficType">
 											</ul>
 										</div>
@@ -524,12 +575,12 @@
 						<div class="form-group" style="margin-top: 10px" >
 					    	<label for="blockerShellOutput" class="col-sm-2 control-label">Shell output</label>
 						    <div class="col-sm-10">
-					      		<textarea disabled="true" style="resize: none" class="form-control" id="shellOutput" rows="5"></textarea>
+					      		<textarea disabled="true" style="resize: none" class="form-control" id="shellBlockerOutput" rows="5"></textarea>
 						    </div>
 					  	</div>
 
 					  	<div class="row clearfix" style="text-align: center">
-					  		<button class="btn btn-default" type="submit" style="margin-top: 20px" onclick="getStatus();">Get Status</button>
+					  		<button class="btn btn-default" type="submit" style="margin-top: 20px" onclick="getBlockerStatus();">Get Status</button>
 				  		</div>
 					</div>
 

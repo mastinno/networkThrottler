@@ -4,8 +4,10 @@ define([
     'body-parser',
     'socket.io',
     'throttler',
+    'blocker',
+    'utils',
     'throttler_updater'
-], function(express, http, bodyParser, io, throttler, throttler_updater) {
+], function(express, http, bodyParser, io, throttler, blocker, utils, throttler_updater) {
 
     var app;
     var sio;
@@ -61,6 +63,7 @@ define([
 
         sio.sockets.on('connection', function(socket) {
 
+            // Traffic Throttler API 
             socket.on('startThrottler', function(conf, callback) {
                 console.log('Throttler start conf ' + JSON.stringify(conf));
                 var res = throttler.start(conf);
@@ -80,9 +83,32 @@ define([
                 callback(res);
             });
 
+            // Traffic Blocker API
+
+            socket.on('startBlocker', function(conf, callback) {
+                console.log('Blocker start conf ' + JSON.stringify(conf));
+                var res = blocker.start(conf);
+                console.log("Blocker start result - " + JSON.stringify(res));
+                callback(res);
+            });
+
+            socket.on('stopBlocker', function(callback) {
+                var res = blocker.stop();
+                console.log("Blocker stop result - " + JSON.stringify(res));
+                callback(res);
+            });
+
+            socket.on('getBlockerStatus', function(callback) {
+                var res = blocker.getStatus();
+                console.log("Blocker get status - " + JSON.stringify(res));
+                callback(res);
+            });
+
+            // Utils
+
             socket.on('checkForUpdates', function(callback) {
                 callback(throttler_updater.checkForUpdate());
-            });   
+            });
         });
     };
 
@@ -90,9 +116,10 @@ define([
         res.render('index', {  
             profiles: JSON.stringify(throttler.getProfilesList()),
             status: JSON.stringify(throttler.getStatus()),
-            ifaces: JSON.stringify(throttler.getNetworkInterfacesNames()),
-            blockerProtocols: JSON.stringify(throttler.getBlockerProtocols()),
-            trafficTypes: JSON.stringify(throttler.getBlockerTrafficTypes())
+            ifaces: JSON.stringify(utils.getNetworkInterfacesNames()),
+            blockerStatus: JSON.stringify(blocker.getStatus()),
+            blockerProtocols: JSON.stringify(blocker.getBlockerProtocols()),
+            trafficTypes: JSON.stringify(blocker.getBlockerTrafficTypes())
         });
     }
 
