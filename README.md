@@ -23,7 +23,7 @@ To run throttler on Raspberry PI you need to have following:
 * Connect to Raspberry Pi: 
     - via ssh (if you know its IP).
     - via [serial cable](http://workshop.raspberrypiaustralia.com/usb/ttl/connecting/2014/08/31/01-connecting-to-raspberry-pi-via-usb/). You may need to check [this](http://www.adafruit.com/products/954?&main_page=product_info&products_id=954) to find out correct wire colors in serial cable. Its possible that you need to use this command: screen /dev/cu.usbserial 115200)  
-* Configured WiFi access point. Follow guide [here](http://raspberrypihq.com/how-to-turn-a-raspberry-pi-into-a-wifi-router/). NOTE: new version of hostapd can be found [here](https://github.com/jenssegers/RTL8188-hostapd/archive/v2.0.tar.gz). You may experience the issue with update-rc.d to solve it follow this [suggestion](https://groups.google.com/forum/#!topic/logstash-users/orpWBtElt0c). Also, to solve issue with WiFi authentication (device can't be authenticated with RPI WiFi access point and following log message _...IEEE 802.11: deauthenticated due to local deauth request_ will be found in /var/log/messages) you need to install [haveged](http://itsacleanmachine.blogspot.de/2013/02/wifi-access-point-with-raspberry-pi.htmli).
+* Configured WiFi access point. Follow guide [here](http://raspberrypihq.com/how-to-turn-a-raspberry-pi-into-a-wifi-router/) or [here](http://elinux.org/RPI-Wireless-Hotspot). NOTE: new version of hostapd can be found [here](https://github.com/jenssegers/RTL8188-hostapd/archive/v2.0.tar.gz). You may experience the issue with update-rc.d to solve it follow this [suggestion](https://groups.google.com/forum/#!topic/logstash-users/orpWBtElt0c). Also, to solve issue with WiFi authentication (device can't be authenticated with RPI WiFi access point and following log message _...IEEE 802.11: deauthenticated due to local deauth request_ will be found in /var/log/messages) you need to install [haveged](http://itsacleanmachine.blogspot.de/2013/02/wifi-access-point-with-raspberry-pi.htmli).
 
 ##Pre-installed software requirements
 
@@ -34,6 +34,10 @@ To run throttler on Raspberry PI you need to have following:
 		$ sudo npm install nodemon -g
 
 ##Running
+
+Install Node.js packages required by application - go inside the sources root directory and run:
+
+	$ node install 
 
 To start Network Throtler just go inside the sources root directory and run:
 	
